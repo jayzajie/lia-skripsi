@@ -1,0 +1,32 @@
+/* Custom logo styling */
+.centered-logo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px 0 5px 0; /* Mengurangi padding bawah */
+  margin-bottom: 0; /* Menghilangkan margin bawah */
+}
+
+.centered-logo .logo-img {
+  text-align: center;
+  width: 100%;
+}
+
+.centered-logo .logo-img img {
+  max-height: 150px; /* Ukuran logo yang diminta */
+  width: auto;
+}
+
+/* Backward compatibility for old class */
+.enlarged-logo {
+  max-height: 150px !important;
+  width: auto !important;
+}
+.enlarged-logo {
+  max-height: 45px !important;
+  width: auto !important;
+  transform: scale(2.5) !important;
+  transform-origin: left center !important;
+  position: relative !important;
+  z-index: 1000 !important;
+}
