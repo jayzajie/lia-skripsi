@@ -30,7 +30,10 @@ class SchoolClass extends Model
     // Relationship with students
     public function students()
     {
-        return $this->hasMany(Student::class, 'class_level', 'name');
+        return $this->hasMany(Student::class, 'class_level', 'name')
+                    ->where('academic_year', $this->academic_year)
+                    ->where('status', 'active')
+                    ->orderBy('name');
     }
 
     // Scope for active classes
@@ -49,6 +52,25 @@ class SchoolClass extends Model
     public function teacher()
     {
         return $this->belongsTo(Staff::class, 'homeroom_teacher', 'name');
+    }
+
+    // Alias for homeroom teacher (for consistency)
+    public function homeroom_teacher()
+    {
+        return $this->teacher();
+    }
+
+    // Get schedules for this class
+    public function schedules()
+    {
+        return $this->hasMany(Schedule::class, 'class_level', 'name')
+                    ->where('academic_year', $this->academic_year);
+    }
+
+    // Get subjects for this class
+    public function subjects()
+    {
+        return $this->hasMany(Subject::class, 'class_level', 'name');
     }
 
     // Update student count

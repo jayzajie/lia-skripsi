@@ -274,6 +274,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function handleActionChange(select) {
+    console.log('handleActionChange called');
     console.log('Action changed:', select.value);
 
     const studentId = select.dataset.studentId;
@@ -282,6 +283,7 @@ function handleActionChange(select) {
     const classSelect = document.querySelector(`select[name="promotions[${studentId}][new_class]"]`);
 
     console.log('Student ID:', studentId, 'Grade:', grade, 'Action:', action);
+    console.log('Class select found:', classSelect ? 'Yes' : 'No');
 
     if (action === 'promote' || action === 'repeat') {
         classSelect.style.display = 'block';
@@ -333,11 +335,22 @@ function handleActionChange(select) {
 }
 
 function selectAllForGrade(grade, action) {
+    console.log('selectAllForGrade called with grade:', grade, 'action:', action);
     const selects = document.querySelectorAll(`select[data-grade="${grade}"].action-select`);
+    console.log('Found selects:', selects.length);
+
+    if (selects.length === 0) {
+        alert('Tidak ada siswa ditemukan untuk kelas ' + grade);
+        return;
+    }
+
     selects.forEach(select => {
+        console.log('Setting select value to:', action);
         select.value = action;
         handleActionChange(select);
     });
+
+    console.log('selectAllForGrade completed');
 }
 
 function confirmAutoPromotion() {

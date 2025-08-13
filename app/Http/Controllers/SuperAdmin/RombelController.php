@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\Staff;
+use App\Models\Schedule;
+use App\Models\Subject;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -19,7 +21,7 @@ class RombelController extends Controller
     {
         $academicYears = SchoolClass::distinct()->pluck('academic_year')->sort();
         $currentAcademicYear = $academicYears->last() ?? date('Y') . '/' . (date('Y') + 1);
-        
+
         // Get classes grouped by grade level
         $classesByGrade = SchoolClass::where('academic_year', $currentAcademicYear)
                                    ->orderBy('grade_level')
@@ -42,12 +44,24 @@ class RombelController extends Controller
             ];
         }
 
+
+
         return view('superadmin.rombel.index', compact(
-            'classesByGrade', 
-            'academicYears', 
+            'classesByGrade',
+            'academicYears',
             'currentAcademicYear',
             'studentStats'
         ));
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(SchoolClass $class)
+    {
+        $class->load('teacher');
+
+        return view('superadmin.rombel.show', compact('class'));
     }
 
     /**
@@ -58,7 +72,7 @@ class RombelController extends Controller
         $teachers = Staff::where('position', 'like', '%guru%')
                         ->orWhere('position', 'like', '%teacher%')
                         ->pluck('name', 'id');
-        
+
         $academicYears = SchoolClass::distinct()->pluck('academic_year')->sort();
         $nextAcademicYear = $this->generateNextAcademicYear();
 
@@ -79,7 +93,7 @@ class RombelController extends Controller
         ]);
 
         DB::beginTransaction();
-        
+
         try {
             $createdClasses = [];
             $sections = ['A', 'B', 'C', 'D', 'E'];
@@ -87,7 +101,7 @@ class RombelController extends Controller
             // Create classes for each grade (1-6)
             for ($grade = 1; $grade <= 6; $grade++) {
                 $classCount = $request->classes_per_grade[$grade] ?? 1;
-                
+
                 for ($i = 0; $i < $classCount; $i++) {
                     $section = $sections[$i];
                     $className = $grade . $section;
@@ -122,10 +136,59 @@ class RombelController extends Controller
         } catch (\Exception $e) {
             DB::rollback();
             Log::error('Error creating rombel: ' . $e->getMessage());
-            
+
             return back()->withErrors(['error' => 'Gagal membuat rombel: ' . $e->getMessage()])
                         ->withInput();
         }
+    }
+
+    public function edit(SchoolClass $class)
+    {
+        return view('superadmin.rombel.edit', compact('class'));
+    }
+
+    public function update(Request $request, SchoolClass $class)
+    {
+        $request->validate([
+            'name' => 'required|string|max:10|unique:school_classes,name,' . $class->id,
+            'capacity' => 'required|integer|min:10|max:50',
+            'homeroom_teacher' => 'nullable|string|max:255',
+            'description' => 'nullable|string|max:255',
+            'status' => 'required|in:active,inactive'
+        ]);
+
+        // Validate capacity doesn't go below current student count
+        if ($request->capacity < $class->current_students) {
+            return back()->withErrors([
+                'capacity' => "Kapasitas tidak boleh kurang dari jumlah siswa saat ini ({$class->current_students})"
+            ])->withInput();
+        }
+
+        $class->update([
+            'name' => $request->name,
+            'capacity' => $request->capacity,
+            'homeroom_teacher' => $request->homeroom_teacher,
+            'description' => $request->description,
+            'status' => $request->status
+        ]);
+
+        return redirect()->route('superadmin.rombel.index')
+                        ->with('success', 'Rombel ' . $class->name . ' berhasil diperbarui');
+    }
+
+    public function destroy(SchoolClass $class)
+    {
+        // Check if class has students
+        if ($class->current_students > 0) {
+            return redirect()->route('superadmin.rombel.index')
+                            ->with('error', 'Tidak dapat menghapus rombel yang masih memiliki siswa');
+        }
+
+        $className = $class->name;
+        $class->delete();
+
+        return redirect()->route('superadmin.rombel.index')
+                        ->with('success', 'Rombel ' . $className . ' berhasil dihapus');
     }
 
     /**
@@ -145,7 +208,7 @@ class RombelController extends Controller
                              ->active()
                              ->with('schoolClass')
                              ->get();
-            
+
             $studentsByGrade[$grade] = $students;
         }
 
@@ -187,18 +250,18 @@ class RombelController extends Controller
 
             foreach ($request->promotions as $promotion) {
                 $student = Student::find($promotion['student_id']);
-                
+
                 switch ($promotion['action']) {
                     case 'promote':
                         $this->promoteStudent($student, $promotion['new_class'], $request->next_academic_year);
                         $promoted++;
                         break;
-                        
+
                     case 'repeat':
                         $this->repeatStudent($student, $request->next_academic_year);
                         $repeated++;
                         break;
-                        
+
                     case 'graduate':
                         $this->graduateStudent($student);
                         $graduated++;
@@ -217,7 +280,7 @@ class RombelController extends Controller
         } catch (\Exception $e) {
             DB::rollback();
             Log::error('Error processing promotion: ' . $e->getMessage());
-            
+
             return back()->withErrors(['error' => 'Gagal memproses promosi: ' . $e->getMessage()]);
         }
     }
@@ -256,7 +319,7 @@ class RombelController extends Controller
                         // Promote to next grade
                         $nextGrade = $gradeLevel + 1;
                         $availableClass = $this->findAvailableClass($nextGrade, $request->next_academic_year);
-                        
+
                         if ($availableClass) {
                             $this->promoteStudent($student, $availableClass->name, $request->next_academic_year);
                             $promoted++;
@@ -276,7 +339,7 @@ class RombelController extends Controller
         } catch (\Exception $e) {
             DB::rollback();
             Log::error('Error in auto promotion: ' . $e->getMessage());
-            
+
             return back()->withErrors(['error' => 'Gagal melakukan auto promosi: ' . $e->getMessage()]);
         }
     }
@@ -286,6 +349,15 @@ class RombelController extends Controller
      */
     private function promoteStudent($student, $newClass, $academicYear)
     {
+        // Check if target class has capacity
+        $targetClass = SchoolClass::where('name', $newClass)
+                                 ->where('academic_year', $academicYear)
+                                 ->first();
+
+        if ($targetClass && !$targetClass->hasCapacity()) {
+            throw new \Exception("Kelas {$newClass} sudah penuh. Kapasitas: {$targetClass->capacity}");
+        }
+
         $student->update([
             'class_level' => $newClass,
             'academic_year' => $academicYear,
@@ -336,7 +408,7 @@ class RombelController extends Controller
     private function updateAllClassCounts($academicYear)
     {
         $classes = SchoolClass::where('academic_year', $academicYear)->get();
-        
+
         foreach ($classes as $class) {
             $class->updateStudentCount();
         }
@@ -350,11 +422,13 @@ class RombelController extends Controller
         if (!$currentYear) {
             $currentYear = date('Y') . '/' . (date('Y') + 1);
         }
-        
+
         $years = explode('/', $currentYear);
         $nextStartYear = (int)$years[0] + 1;
         $nextEndYear = (int)$years[1] + 1;
-        
+
         return $nextStartYear . '/' . $nextEndYear;
     }
+
+
 }

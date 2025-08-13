@@ -25,10 +25,19 @@ use App\Http\Controllers\KartuPesertaController;
 Route::get('/', [App\Http\Controllers\WelcomeController::class, 'index'])->name('welcome');
 
 Route::get('/dashboard', function () {
-    return view('dashboard.home');
+    $user = auth()->user();
+
+    // Redirect berdasarkan role
+    if ($user->hasRole('superadmin')) {
+        return redirect()->route('superadmin.dashboard');
+    } elseif ($user->hasRole('admin')) {
+        return redirect()->route('admin.dashboard');
+    } else {
+        return view('dashboard.home');
+    }
 })->middleware(['auth', 'verified'])->name('dashboard');
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'role:user'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
@@ -76,34 +85,11 @@ Route::middleware('auth')->group(function () {
     Route::put('/dashboard/pengumuman/{pengumuman}', [PengumumanController::class, 'update'])->name('pengumuman.update');
     Route::delete('/dashboard/pengumuman/{pengumuman}', [PengumumanController::class, 'destroy'])->name('pengumuman.destroy');
 
-    // Admin routes - temporarily available to all authenticated users for testing
-    Route::prefix('admin')->name('admin.')->group(function () {
-        // Admin Dashboard
-        Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
 
-        // Verification routes
-        Route::get('/verification', [VerificationController::class, 'index'])->name('verification.index');
-        Route::get('/verification/{konfirmasi}', [VerificationController::class, 'show'])->name('verification.show');
-        Route::post('/verification/{konfirmasi}/approve', [VerificationController::class, 'approve'])->name('verification.approve');
-        Route::post('/verification/{konfirmasi}/reject', [VerificationController::class, 'reject'])->name('verification.reject');
-        Route::get('/verification/berkas/{berkas}/view', [VerificationController::class, 'viewBerkas'])->name('verification.berkas.view');
-        Route::get('/verification/berkas/{berkas}/download', [VerificationController::class, 'downloadBerkas'])->name('verification.berkas.download');
-
-        // Cetak Kartu Peserta
-        Route::get('/verification/{konfirmasi}/kartu', [VerificationController::class, 'cetakKartu'])->name('verification.kartu');
-
-        // Student Management routes
-        Route::get('/students', [StudentController::class, 'index'])->name('students.index');
-        Route::get('/students/{formulir}', [StudentController::class, 'show'])->name('students.show');
-        Route::get('/students/{formulir}/edit', [StudentController::class, 'edit'])->name('students.edit');
-        Route::put('/students/{formulir}', [StudentController::class, 'update'])->name('students.update');
-        Route::delete('/students/{formulir}', [StudentController::class, 'destroy'])->name('students.destroy');
-    });
 });
 
-// Super Admin Routes - temporarily available to all authenticated users for development
-// Tambahkan di bagian routes superadmin
-Route::middleware(['auth'])->prefix('superadmin')->name('superadmin.')->group(function () {
+// Super Admin Routes - hanya untuk superadmin
+Route::middleware(['auth', 'role:superadmin'])->prefix('superadmin')->name('superadmin.')->group(function () {
     Route::get('/dashboard', [App\Http\Controllers\SuperAdmin\DashboardController::class, 'index'])->name('dashboard');
 
     // Students routes
@@ -112,8 +98,7 @@ Route::middleware(['auth'])->prefix('superadmin')->name('superadmin.')->group(fu
     // Staff routes
     Route::resource('staff', App\Http\Controllers\SuperAdmin\StaffController::class);
 
-    // Classes routes
-    Route::resource('classes', App\Http\Controllers\Superadmin\ClassController::class);
+
 
     // Activities routes
     Route::resource('activities', App\Http\Controllers\SuperAdmin\ActivityController::class);
@@ -143,6 +128,11 @@ Route::middleware(['auth'])->prefix('superadmin')->name('superadmin.')->group(fu
     // User Management routes
     Route::resource('users', App\Http\Controllers\SuperAdmin\UserController::class);
 
+    // Class Data routes (View-only for class information)
+    Route::prefix('classes')->name('classes.')->group(function () {
+        Route::get('/', [App\Http\Controllers\SuperAdmin\ClassController::class, 'index'])->name('index');
+    });
+
     // Rombel Management routes
     Route::prefix('rombel')->name('rombel.')->group(function () {
         Route::get('/', [App\Http\Controllers\SuperAdmin\RombelController::class, 'index'])->name('index');
@@ -151,12 +141,38 @@ Route::middleware(['auth'])->prefix('superadmin')->name('superadmin.')->group(fu
         Route::get('/promotion', [App\Http\Controllers\SuperAdmin\RombelController::class, 'promotion'])->name('promotion');
         Route::post('/process-promotion', [App\Http\Controllers\SuperAdmin\RombelController::class, 'processPromotion'])->name('process-promotion');
         Route::post('/auto-promotion', [App\Http\Controllers\SuperAdmin\RombelController::class, 'autoPromotion'])->name('auto-promotion');
+        Route::get('/{class}', [App\Http\Controllers\SuperAdmin\RombelController::class, 'show'])->name('show');
+        Route::get('/{class}/edit', [App\Http\Controllers\SuperAdmin\RombelController::class, 'edit'])->name('edit');
+        Route::put('/{class}', [App\Http\Controllers\SuperAdmin\RombelController::class, 'update'])->name('update');
+        Route::delete('/{class}', [App\Http\Controllers\SuperAdmin\RombelController::class, 'destroy'])->name('destroy');
+
     });
 });
 
-// Tambahkan di bagian routes admin
-Route::prefix('admin')->name('admin.')->group(function () {
-    // Academic Year routes (dengan tambahan create dan store)
+// Admin routes - hanya untuk admin
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->group(function () {
+    // Admin Dashboard
+    Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
+
+    // Verification routes
+    Route::get('/verification', [VerificationController::class, 'index'])->name('verification.index');
+    Route::get('/verification/{konfirmasi}', [VerificationController::class, 'show'])->name('verification.show');
+    Route::post('/verification/{konfirmasi}/approve', [VerificationController::class, 'approve'])->name('verification.approve');
+    Route::post('/verification/{konfirmasi}/reject', [VerificationController::class, 'reject'])->name('verification.reject');
+    Route::get('/verification/berkas/{berkas}/view', [VerificationController::class, 'viewBerkas'])->name('verification.berkas.view');
+    Route::get('/verification/berkas/{berkas}/download', [VerificationController::class, 'downloadBerkas'])->name('verification.berkas.download');
+
+    // Cetak Kartu Peserta
+    Route::get('/verification/{konfirmasi}/kartu', [VerificationController::class, 'cetakKartu'])->name('verification.kartu');
+
+    // Student Management routes
+    Route::get('/students', [StudentController::class, 'index'])->name('students.index');
+    Route::get('/students/{formulir}', [StudentController::class, 'show'])->name('students.show');
+    Route::get('/students/{formulir}/edit', [StudentController::class, 'edit'])->name('students.edit');
+    Route::put('/students/{formulir}', [StudentController::class, 'update'])->name('students.update');
+    Route::delete('/students/{formulir}', [StudentController::class, 'destroy'])->name('students.destroy');
+
+    // Academic Year routes
     Route::get('/academic-years', [App\Http\Controllers\Admin\AcademicYearController::class, 'index'])->name('academic-years.index');
     Route::get('/academic-years/create', [App\Http\Controllers\Admin\AcademicYearController::class, 'create'])->name('academic-years.create');
     Route::post('/academic-years', [App\Http\Controllers\Admin\AcademicYearController::class, 'store'])->name('academic-years.store');

@@ -18,8 +18,8 @@
                         <select name="role" class="form-select" onchange="this.form.submit()">
                             <option value="">Semua Role</option>
                             @foreach($roles as $role)
-                                <option value="{{ $role->id }}" {{ request('role') == $role->id ? 'selected' : '' }}>
-                                    {{ ucfirst($role->name) }}
+                                <option value="{{ $role }}" {{ request('role') == $role ? 'selected' : '' }}>
+                                    {{ ucfirst($role) }}
                                 </option>
                             @endforeach
                         </select>
@@ -58,9 +58,10 @@
                                 <td>{{ $user->email }}</td>
                                 <td>{{ $user->phone ?? '-' }}</td>
                                 <td>
-                                    @foreach($user->roles as $role)
-                                        <span class="badge bg-primary">{{ ucfirst($role->name) }}</span>
-                                    @endforeach
+                                    <span class="badge bg-primary">{{ $user->getRoleDisplayName() }}</span>
+                                    @if(!$user->is_active)
+                                        <span class="badge bg-danger ms-1">Tidak Aktif</span>
+                                    @endif
                                 </td>
                                 <td>{{ $user->created_at->format('d M Y H:i') }}</td>
                                 <td>

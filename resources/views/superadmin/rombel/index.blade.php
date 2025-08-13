@@ -68,6 +68,8 @@
         @endfor
     </div>
 
+
+
     <!-- Classes by Grade -->
     @for($grade = 1; $grade <= 6; $grade++)
         <div class="card mb-4">
@@ -79,7 +81,7 @@
                     @endif
                 </h5>
                 <div>
-                    <a href="{{ route('superadmin.classes.create') }}?grade={{ $grade }}" class="btn btn-sm btn-outline-primary">
+                    <a href="{{ route('superadmin.rombel.create') }}" class="btn btn-sm btn-outline-primary">
                         <i class="fas fa-plus"></i> Tambah Rombel
                     </a>
                 </div>
@@ -123,14 +125,30 @@
                                         </div>
 
                                         <div class="mt-3">
-                                            <a href="{{ route('superadmin.classes.show', $class) }}"
-                                               class="btn btn-sm btn-outline-info">
-                                                <i class="fas fa-eye"></i> Detail
-                                            </a>
-                                            <a href="{{ route('superadmin.classes.edit', $class) }}"
-                                               class="btn btn-sm btn-outline-warning">
-                                                <i class="fas fa-edit"></i> Edit
-                                            </a>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <small class="text-muted">
+                                                    <i class="fas fa-info-circle"></i>
+                                                    {{ $class->description ?? 'Kelas ' . $class->name }}
+                                                </small>
+                                                <div>
+                                                    <a href="{{ route('superadmin.rombel.show', $class->id) }}"
+                                                       class="btn btn-sm btn-outline-info"
+                                                       title="Detail Rombel">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    <a href="{{ route('superadmin.rombel.edit', $class->id) }}"
+                                                       class="btn btn-sm btn-outline-warning"
+                                                       title="Edit Rombel">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    <button type="button"
+                                                            class="btn btn-sm btn-outline-danger"
+                                                            onclick="confirmDelete({{ $class->id }}, '{{ $class->name }}')"
+                                                            title="Hapus Rombel">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -141,7 +159,7 @@
                     <div class="text-center py-4">
                         <i class="fas fa-school fa-3x text-gray-300 mb-3"></i>
                         <p class="text-muted">Belum ada rombel untuk kelas {{ $grade }}</p>
-                        <a href="{{ route('superadmin.classes.create') }}?grade={{ $grade }}"
+                        <a href="{{ route('superadmin.rombel.create') }}"
                            class="btn btn-primary">
                             <i class="fas fa-plus"></i> Buat Rombel Pertama
                         </a>
@@ -151,49 +169,53 @@
         </div>
     @endfor
 
-    <!-- Quick Actions -->
+    <!-- Summary Card -->
     <div class="card">
-        {{-- <div class="card-header">
-            <h5 class="mb-0"><i class="fas fa-bolt"></i> Aksi Cepat</h5>
+        <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-chart-pie"></i> Ringkasan Rombel</h5>
         </div>
         <div class="card-body">
-            <div class="row">
+            @php
+                $totalClasses = 0;
+                $totalStudents = 0;
+                $totalCapacity = 0;
+                foreach($classesByGrade as $grade => $classes) {
+                    $totalClasses += $classes->count();
+                    foreach($classes as $class) {
+                        $totalStudents += $class->current_students;
+                        $totalCapacity += $class->capacity;
+                    }
+                }
+                $occupancyRate = $totalCapacity > 0 ? ($totalStudents / $totalCapacity) * 100 : 0;
+            @endphp
+
+            <div class="row text-center">
                 <div class="col-md-3">
-                    <div class="d-grid">
-                        <a href="{{ route('superadmin.rombel.create') }}" class="btn btn-primary">
-                            <i class="fas fa-plus"></i><br>
-                            <small>Buat Rombel Baru</small>
-                        </a>
+                    <div class="border-right">
+                        <h3 class="text-primary">{{ $totalClasses }}</h3>
+                        <p class="text-muted mb-0">Total Rombel</p>
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="d-grid">
-                        <a href="{{ route('superadmin.rombel.promotion') }}" class="btn btn-success">
-                            <i class="fas fa-arrow-up"></i><br>
-                            <small>Promosi Siswa</small>
-                        </a>
+                    <div class="border-right">
+                        <h3 class="text-success">{{ $totalStudents }}</h3>
+                        <p class="text-muted mb-0">Total Siswa</p>
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="d-grid">
-                        <a href="{{ route('superadmin.students.index') }}" class="btn btn-info">
-                            <i class="fas fa-users"></i><br>
-                            <small>Kelola Siswa</small>
-                        </a>
+                    <div class="border-right">
+                        <h3 class="text-info">{{ $totalCapacity }}</h3>
+                        <p class="text-muted mb-0">Total Kapasitas</p>
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="d-grid">
-                        <a href="{{ route('superadmin.classes.index') }}" class="btn btn-warning">
-                            <i class="fas fa-school"></i><br>
-                            <small>Kelola Kelas</small>
-                        </a>
-                    </div>
+                    <h3 class="text-warning">{{ number_format($occupancyRate, 1) }}%</h3>
+                    <p class="text-muted mb-0">Tingkat Hunian</p>
                 </div>
             </div>
         </div>
     </div>
-</div> --}}
+</div>
 
 @push('styles')
 <style>
@@ -213,6 +235,39 @@
 .text-sm {
     font-size: 0.875rem;
 }
+.border-right {
+    border-right: 1px solid #e3e6f0;
+}
 </style>
+@endpush
+
+@push('scripts')
+<script>
+function confirmDelete(classId, className) {
+    if (confirm(`Yakin ingin menghapus rombel ${className}?\n\nPerhatian: Semua data siswa di kelas ini akan terpengaruh!`)) {
+        // Create form and submit
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `{{ url('/superadmin/rombel') }}/${classId}`;
+
+        // Add CSRF token
+        const csrfToken = document.createElement('input');
+        csrfToken.type = 'hidden';
+        csrfToken.name = '_token';
+        csrfToken.value = '{{ csrf_token() }}';
+        form.appendChild(csrfToken);
+
+        // Add method override
+        const methodField = document.createElement('input');
+        methodField.type = 'hidden';
+        methodField.name = '_method';
+        methodField.value = 'DELETE';
+        form.appendChild(methodField);
+
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+</script>
 @endpush
 @endsection

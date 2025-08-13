@@ -7,7 +7,6 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
-use Spatie\Permission\Models\Role;
 use Illuminate\Validation\Rule;
 
 class UserController extends Controller
@@ -18,7 +17,7 @@ class UserController extends Controller
     public function index(Request $request)
     {
         $query = User::query();
-        
+
         // Search functionality
         if ($request->has('search')) {
             $search = $request->search;
@@ -28,21 +27,21 @@ class UserController extends Controller
                   ->orWhere('phone', 'like', "%{$search}%");
             });
         }
-        
+
         // Filter by role
         if ($request->has('role') && $request->role != '') {
-            $query->role($request->role);
+            $query->where('role', $request->role);
         }
-        
+
         // Sort
         $sortField = $request->input('sort', 'name');
         $sortDirection = $request->input('direction', 'asc');
         $query->orderBy($sortField, $sortDirection);
-        
+
         $users = $query->paginate(10)->withQueryString();
-        $roles = Role::all();
+        $roles = ['superadmin', 'admin', 'guru', 'siswa', 'orangtua'];
         $totalUsers = User::count();
-        
+
         return view('superadmin.users.index', compact('users', 'roles', 'totalUsers'));
     }
 
@@ -51,7 +50,7 @@ class UserController extends Controller
      */
     public function create()
     {
-        $roles = Role::all();
+        $roles = ['superadmin', 'admin', 'guru', 'siswa', 'orangtua'];
         return view('superadmin.users.create', compact('roles'));
     }
 
@@ -65,8 +64,8 @@ class UserController extends Controller
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'phone' => ['nullable', 'string', 'max:20', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'roles' => ['required', 'array'],
-            'roles.*' => ['exists:roles,id'],
+            'role' => ['required', 'in:superadmin,admin,guru,siswa,orangtua'],
+            'is_active' => ['boolean'],
         ]);
 
         $user = User::create([
@@ -74,11 +73,9 @@ class UserController extends Controller
             'email' => $request->email,
             'phone' => $request->phone,
             'password' => Hash::make($request->password),
+            'role' => $request->role,
+            'is_active' => $request->boolean('is_active', true),
         ]);
-
-        // Assign roles
-        $roles = Role::whereIn('id', $request->roles)->get();
-        $user->syncRoles($roles);
 
         return redirect()->route('superadmin.users.index')
             ->with('success', 'User berhasil ditambahkan');
@@ -97,7 +94,7 @@ class UserController extends Controller
      */
     public function edit(User $user)
     {
-        $roles = Role::all();
+        $roles = ['superadmin', 'admin', 'guru', 'siswa', 'orangtua'];
         return view('superadmin.users.edit', compact('user', 'roles'));
     }
 
@@ -110,14 +107,16 @@ class UserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
             'phone' => ['nullable', 'string', 'max:20', Rule::unique('users')->ignore($user->id)],
-            'roles' => ['required', 'array'],
-            'roles.*' => ['exists:roles,id'],
+            'role' => ['required', 'in:superadmin,admin,guru,siswa,orangtua'],
+            'is_active' => ['boolean'],
         ]);
 
         $user->update([
             'name' => $request->name,
             'email' => $request->email,
             'phone' => $request->phone,
+            'role' => $request->role,
+            'is_active' => $request->boolean('is_active', true),
         ]);
 
         // Update password if provided
@@ -125,15 +124,11 @@ class UserController extends Controller
             $request->validate([
                 'password' => ['required', 'confirmed', Rules\Password::defaults()],
             ]);
-            
+
             $user->update([
                 'password' => Hash::make($request->password),
             ]);
         }
-
-        // Sync roles
-        $roles = Role::whereIn('id', $request->roles)->get();
-        $user->syncRoles($roles);
 
         return redirect()->route('superadmin.users.index')
             ->with('success', 'User berhasil diperbarui');
@@ -149,7 +144,7 @@ class UserController extends Controller
             return redirect()->route('superadmin.users.index')
                 ->with('error', 'Tidak dapat menghapus user superadmin terakhir');
         }
-        
+
         $user->delete();
 
         return redirect()->route('superadmin.users.index')

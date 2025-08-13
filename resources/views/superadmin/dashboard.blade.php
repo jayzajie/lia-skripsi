@@ -109,7 +109,7 @@
                         </div>
                     </div>
                     <div class="mt-3">
-                        <a href="{{ route('superadmin.classes.index') }}" class="btn btn-outline-warning btn-sm w-100">
+                        <a href="{{ route('superadmin.rombel.index') }}" class="btn btn-outline-warning btn-sm w-100">
                             <i class="fas fa-eye me-1"></i> Lihat Detail
                         </a>
                     </div>
@@ -182,7 +182,7 @@
                             </h5>
                             <p class="text-muted small mb-0">Rincian jumlah siswa</p>
                         </div>
-                        <a href="{{ route('superadmin.classes.index') }}" class="btn btn-outline-success btn-sm">
+                        <a href="{{ route('superadmin.rombel.index') }}" class="btn btn-outline-success btn-sm">
                             <i class="fas fa-external-link-alt me-1"></i> Kelola
                         </a>
                     </div>
@@ -240,8 +240,8 @@
                             </div>
                             <h6 class="text-muted">Belum ada data kelas</h6>
                             <p class="text-muted small">Mulai dengan menambahkan kelas baru</p>
-                            <a href="{{ route('superadmin.classes.create') }}" class="btn btn-primary btn-sm">
-                                <i class="fas fa-plus me-1"></i> Tambah Kelas
+                            <a href="{{ route('superadmin.rombel.create') }}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-plus me-1"></i> Tambah Rombel
                             </a>
                         </div>
                     @endif

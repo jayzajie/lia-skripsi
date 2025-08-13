@@ -9,6 +9,8 @@
   <link rel="stylesheet" href="{{ asset('assets/css/styles.min.css') }}" />
   <link rel="stylesheet" href="{{ asset('assets/css/dashboard-custom.css') }}" />
   <link rel="stylesheet" href="{{ asset('assets/css/logo-custom.css') }}" />
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- Tambahkan CSS datepicker -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css">
 </head>
@@ -65,10 +67,11 @@
             </li>
             <li class="sidebar-item">
               <a class="sidebar-link {{ request()->routeIs('superadmin.rombel.*') ? 'active' : '' }}" href="{{ route('superadmin.rombel.index') }}" aria-expanded="false">
-                <i class="ti ti-eye"></i>
+                <i class="ti ti-users"></i>
                 <span class="hide-menu">Manajemen Rombel</span>
               </a>
             </li>
+
             <li class="sidebar-item">
               <a class="sidebar-link {{ request()->routeIs('superadmin.activities.index') ? 'active' : '' }}" href="{{ route('superadmin.activities.index') }}" aria-expanded="false">
                 <i class="ti ti-calendar"></i>

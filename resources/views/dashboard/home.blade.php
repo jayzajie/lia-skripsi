@@ -114,18 +114,7 @@
             </li>
           </ul>
 
-          <!-- Admin testing section -->
-          <div class="mt-4 mx-4">
-            <div class="alert alert-info">
-              <h6 class="alert-heading">Admin Panel (Testing)</h6>
-              <div class="mt-2">
-                <a href="{{ route('admin.dashboard') }}" class="btn btn-sm btn-primary d-block mb-2">Admin Dashboard</a>
-                <a href="{{ route('admin.verification.index') }}" class="btn btn-sm btn-primary d-block mb-2">Verifikasi Data</a>
-                <a href="{{ route('admin.students.index') }}" class="btn btn-sm btn-primary d-block mb-2">Data Siswa</a>
-                <a href="{{ route('superadmin.dashboard') }}" class="btn btn-sm btn-success d-block">Super Admin Dashboard</a>
-              </div>
-            </div>
-          </div>
+
         </nav>
         <!-- End Sidebar navigation -->
       </div>

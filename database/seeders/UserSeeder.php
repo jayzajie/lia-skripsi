@@ -6,7 +6,6 @@ use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
-use Spatie\Permission\Models\Role;
 
 class UserSeeder extends Seeder
 {
@@ -18,7 +17,9 @@ class UserSeeder extends Seeder
         // Create users with specific roles
         $this->createSuperAdmin();
         $this->createAdmin();
-        $this->createRegularUsers();
+        $this->createGuru();
+        $this->createSiswa();
+        $this->createOrangtua();
     }
 
     /**
@@ -34,11 +35,10 @@ class UserSeeder extends Seeder
                 'phone' => '08123456789',
                 'password' => Hash::make('password'),
                 'email_verified_at' => now(),
+                'role' => 'superadmin',
+                'is_active' => true,
             ]
         );
-
-        $superAdminRole = Role::firstOrCreate(['name' => 'superadmin']);
-        $superAdmin->assignRole($superAdminRole);
 
         $this->command->info('Super Admin user created.');
     }
@@ -56,50 +56,74 @@ class UserSeeder extends Seeder
                 'phone' => '08123456788',
                 'password' => Hash::make('password'),
                 'email_verified_at' => now(),
+                'role' => 'admin',
+                'is_active' => true,
             ]
         );
-
-        $adminRole = Role::firstOrCreate(['name' => 'admin']);
-        $admin->assignRole($adminRole);
 
         $this->command->info('Admin user created.');
     }
 
     /**
-     * Create Regular users
+     * Create Guru user
      */
-    private function createRegularUsers(): void
+    private function createGuru(): void
     {
-        // Create a regular user
-        $user = User::updateOrCreate(
-            ['email' => 'user@example.com'],
+        $guru = User::updateOrCreate(
+            ['email' => 'guru@example.com'],
             [
-                'name' => 'Regular User',
-                'email' => 'user@example.com',
-                'phone' => '08123456787',
+                'name' => 'Guru Contoh',
+                'email' => 'guru@example.com',
+                'phone' => '08123456777',
                 'password' => Hash::make('password'),
                 'email_verified_at' => now(),
+                'role' => 'guru',
+                'is_active' => true,
             ]
         );
 
-        $userRole = Role::firstOrCreate(['name' => 'user']);
-        $user->assignRole($userRole);
-
-        // Create staff user
-        $staff = User::updateOrCreate(
-            ['email' => 'staff@example.com'],
-            [
-                'name' => 'Staff User',
-                'email' => 'staff@example.com',
-                'phone' => '08123456786',
-                'password' => Hash::make('password'),
-                'email_verified_at' => now(),
-            ]
-        );
-
-        $staffRole = Role::firstOrCreate(['name' => 'staff']);
-        $staff->assignRole($staffRole);
-
-        $this->command->info('Regular users created.');
+        $this->command->info('Guru user created.');
     }
-} 
+
+    /**
+     * Create Siswa user
+     */
+    private function createSiswa(): void
+    {
+        $siswa = User::updateOrCreate(
+            ['email' => 'siswa@example.com'],
+            [
+                'name' => 'Siswa Contoh',
+                'email' => 'siswa@example.com',
+                'phone' => '08123456776',
+                'password' => Hash::make('password'),
+                'email_verified_at' => now(),
+                'role' => 'siswa',
+                'is_active' => true,
+            ]
+        );
+
+        $this->command->info('Siswa user created.');
+    }
+
+    /**
+     * Create Orangtua user
+     */
+    private function createOrangtua(): void
+    {
+        $orangtua = User::updateOrCreate(
+            ['email' => 'orangtua@example.com'],
+            [
+                'name' => 'Orang Tua Contoh',
+                'email' => 'orangtua@example.com',
+                'phone' => '08123456775',
+                'password' => Hash::make('password'),
+                'email_verified_at' => now(),
+                'role' => 'orangtua',
+                'is_active' => true,
+            ]
+        );
+
+        $this->command->info('Orangtua user created.');
+    }
+}

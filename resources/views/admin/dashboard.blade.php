@@ -8,7 +8,7 @@
     <div class="card w-100 border-0">
       <div class="card-body p-4">
         <h1 class="card-title fs-1 fw-bold mb-4">Selamat Datang !</h1>
-        
+
         <div class="mb-4">
           <h5 class="mb-3">Pemberitahuan</h5>
           <div class="d-flex align-items-center bg-light p-3 rounded">
@@ -21,7 +21,7 @@
             </div>
           </div>
         </div>
-        
+
         <div>
           <h5 class="mb-3">Data</h5>
           <div class="row">
@@ -55,4 +55,4 @@
     </div>
   </div>
 </div>
-@endsection 
+@endsection
